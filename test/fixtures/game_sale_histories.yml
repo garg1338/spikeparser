@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  occurred: 2014-01-24 19:34:42
+  game_id: 1
+  store: MyString
+  price: 1.5
+
+two:
+  occurred: 2014-01-24 19:34:42
+  game_id: 1
+  store: MyString
+  price: 1.5
