@@ -10,103 +10,48 @@
 require 'nokogiri'
 require 'open-uri'
 require 'timeout'
+require 'restclient'
 
 
-# Game.delete_all
 
-GAME_REQUEST_BASE_URL = 'http://www.greenmangaming.com/search/?genres=action&page=2&o=saving'
+AMAZON_STORE_BASE_URL = 'http://www.amazon.com/gp/search/ref=sr_pg_11?rh=n%3A468642%2Cn%3A%2111846801%2Cn%3A979455011%2Cn%3A2445220011&page=11&ie=UTF8&qid=1391573730&lo=none'
 
+result = Nokogiri::HTML(open(AMAZON_STORE_BASE_URL))
 
-result = Nokogiri::HTML(open(GAME_REQUEST_BASE_URL))
-product_list= result.css("ul.product-list")
-product_list_links = product_list.css("li a").map { |a| 
-	a['href'] if a['href'].match("/games/")
-	}.compact.uniq
+rows = result.css(".result.product")
 
-product_list_links.each do |href|
+rows.each do |row|
 
-	#grab the sale page for the game
-	sale_link = 'http://www.greenmangaming.com' + href
-	sale_page = Nokogiri::HTML(open(sale_link))
+	puts row
 
-	#obtain the game title
-	game_title = sale_page.css('h1.prod_det')
-	game_title = /.*<h1 class="prod_det">(.*)<\/h1>.*/.match(game_title.to_s)
-	puts game_title[1]
-	puts "\n"
+	title = row.css("a.title")
 
+	title = title.to_s
 
-	#obtain description
-	description_paragraphs = sale_page.css("section.description p")
-	description = ""
-	description_paragraphs.each do |paragraph|
-		if !(paragraph.to_s.include? "<em>") && !(paragraph.to_s.include? "Features:")
+	title_start = title.index('">')
+	title_end = title.index("[")
 
+	# title = title[title_start+2...title_end]
 
-			if(!paragraph.to_s.include? "<strong>")
-				paragraph_text = (paragraph.to_s)[3...paragraph.to_s.length - 4]
+	puts title
 
-			else
-				paragraph_text = (paragraph.to_s)[11...paragraph.to_s.length - 13]
+	row_string = row.to_s
+	purchase_options = row_string.split("</tr>")
+
+	purchase_options.each do |purchase_option|
+		if purchase_option.include? "PC Download"
+			chunk_start_index = purchase_option.index('toeOurPrice">')
+			if chunk_start_index != nil
+				purchase_option_chunk = purchase_option[chunk_start_index...purchase_option.length]
+				chunk_end_index = purchase_option_chunk.index("</td>")
+				purchase_option_chunk = purchase_option_chunk[0...chunk_end_index]
+				start_index = purchase_option_chunk.index('$')
+				end_index = purchase_option_chunk.index("</a>")
+				sale_price = purchase_option_chunk[start_index...end_index]
+				puts sale_price
 			end
-
-
-			description += paragraph_text + "\n"
-
 		end
 	end
-
-	#obtain normal price, current price
-	current_price = sale_page.css("strong.curPrice")
-	current_price = /.*<strong class="curPrice">(.*)<\/strong>.*/.match(current_price.to_s)
-	puts current_price[1]
-
-
-	if sale_page.to_s.include? "<span class=\"lt\">"
-		normal_price = sale_page.css("span.lt")
-		normal_price = /.*<span class="lt">(.*)<\/span>.*/.match(normal_price.to_s)
-		puts normal_price[1]
-	else
-		puts "This game ain't on sale!"
-	end
-
-	puts "\n"
-
-
-
-	#extract genres
-	
-	#obtain esrb rating
-	
-	#obtain release date
-
-
 end
 
 
-
-
-
-
-
-
-# class CreateGames < ActiveRecord::Migration
-#   def change
-#     create_table :games do |t|
-#       t.string :title
-#       t.string :platform
-#       t.string :release_date
-#       t.string :description
-#       t.string :esrb_rating
-#       t.string :players
-#       t.string :coop
-#       t.string :publisher
-#       t.string :developer
-#       t.string :genres
-#       t.string :metacritic_rating
-#       t.string :image_url
-
-#       t.timestamps
-#     end
-#   end
-# end
