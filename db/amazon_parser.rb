@@ -14,30 +14,46 @@ require 'restclient'
 
 
 
-AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s/ref=lp_2445220011_pg_2?rh=n%3A468642%2Cn%3A%2111846801%2Cn%3A979455011%2Cn%3A2445220011&page=2&ie=UTF8&qid=1391567690'
+AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=250&rh=n%3A2445220011'
 
-result = Nokogiri::HTML(open(APP_BASE_URL))
 
-rows = result.css(".result.product")
+next_url = AMAZON_STORE_BASE_URL
 
-rows.each do |row|
-	# row_info = row.css("td")
+result = RestClient.get(next_url)
 
-	# row_info_2 = row_info[2].to_s
 
-	# if row_info[1].to_s.include? "Game"
-	# 	row_info_app_string = row_info[0].to_s
-	# 	start_index = row_info_app_string.index('">')
-	# 	end_index = row_info_app_string.index('</a>')
-	# 	store_id = row_info_app_string[start_index+2...end_index]
 
-	# 	url = STEAM_STORE_BASE_URL + store_id
-	# 	page = SteamHelper.agePasser(url)
-	# 	puts url
-	# 	SteamHelper.extractPageInfo(page)
 
-	puts row
+while result != nil
+	result = Nokogiri::HTML(result)
 
+	File.open("db/test_files/product_url"  +".html", 'w') { |file| file.write(result.to_s) }
+
+	AmazonHelper.parseProductsOffResultPage(result)
+
+	next_url_chunk = result.css(".pagnNext").to_s
+	next_url_start = next_url_chunk.index('<a href="')
+	next_url_end = next_url_chunk.index('" class')
+	next_url = next_url_chunk[next_url_start+9...next_url_end]
+
+	next_url_chunks = next_url.split("&amp;")
+
+	next_url = "";
+
+	next_url_chunks.each do |url_chunk|
+		next_url = next_url + "&" + url_chunk
 	end
+
+	next_url = next_url[1...next_url.length]
+
+	puts next_url
+	puts "\n"
+	result = RestClient.get(next_url)
 end
+
+
+
+
+
+
 

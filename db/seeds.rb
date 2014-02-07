@@ -14,44 +14,46 @@ require 'restclient'
 
 
 
-AMAZON_STORE_BASE_URL = 'http://www.amazon.com/gp/search/ref=sr_pg_11?rh=n%3A468642%2Cn%3A%2111846801%2Cn%3A979455011%2Cn%3A2445220011&page=11&ie=UTF8&qid=1391573730&lo=none'
+AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=250&rh=n%3A2445220011'
 
-result = Nokogiri::HTML(open(AMAZON_STORE_BASE_URL))
 
-rows = result.css(".result.product")
+next_url = AMAZON_STORE_BASE_URL
 
-rows.each do |row|
+result = RestClient.get(next_url)
 
-	puts row
 
-	title = row.css("a.title")
 
-	title = title.to_s
 
-	title_start = title.index('">')
-	title_end = title.index("[")
+while result != nil
+	result = Nokogiri::HTML(result)
 
-	# title = title[title_start+2...title_end]
+	File.open("db/test_files/product_url"  +".html", 'w') { |file| file.write(result.to_s) }
 
-	puts title
+	AmazonHelper.parseProductsOffResultPage(result)
 
-	row_string = row.to_s
-	purchase_options = row_string.split("</tr>")
+	next_url_chunk = result.css(".pagnNext").to_s
+	next_url_start = next_url_chunk.index('<a href="')
+	next_url_end = next_url_chunk.index('" class')
+	next_url = next_url_chunk[next_url_start+9...next_url_end]
 
-	purchase_options.each do |purchase_option|
-		if purchase_option.include? "PC Download"
-			chunk_start_index = purchase_option.index('toeOurPrice">')
-			if chunk_start_index != nil
-				purchase_option_chunk = purchase_option[chunk_start_index...purchase_option.length]
-				chunk_end_index = purchase_option_chunk.index("</td>")
-				purchase_option_chunk = purchase_option_chunk[0...chunk_end_index]
-				start_index = purchase_option_chunk.index('$')
-				end_index = purchase_option_chunk.index("</a>")
-				sale_price = purchase_option_chunk[start_index...end_index]
-				puts sale_price
-			end
-		end
+	next_url_chunks = next_url.split("&amp;")
+
+	next_url = "";
+
+	next_url_chunks.each do |url_chunk|
+		next_url = next_url + "&" + url_chunk
 	end
+
+	next_url = next_url[1...next_url.length]
+
+	puts next_url
+	puts "\n"
+	result = RestClient.get(next_url)
 end
+
+
+
+
+
 
 
