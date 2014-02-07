@@ -1,4 +1,4 @@
-This is the spike parser solutions we've come up with so far.
+This is the spike parser solutions I've come up with so far.
 
 
 To run a parser, put the desired code into seeds.rb located inside the db folder.
