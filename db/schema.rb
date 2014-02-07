@@ -9,31 +9,31 @@
 # from scratch. The latter is a flawed and unsustainable approach (the more migrations
 # you'll amass, the slower it'll run and the greater likelihood for issues).
 #
-# It's strongly recommended to check this file into your version control system.
+# It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140125034243) do
+ActiveRecord::Schema.define(version: 20140125034243) do
 
-  create_table "game_sale_histories", :force => true do |t|
+  create_table "game_sale_histories", force: true do |t|
     t.datetime "occurred"
     t.integer  "game_id"
     t.string   "store"
     t.float    "price"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
-  create_table "game_sales", :force => true do |t|
+  create_table "game_sales", force: true do |t|
     t.integer  "game_id"
     t.datetime "occurrence"
     t.string   "store"
     t.string   "url"
     t.float    "origamt"
     t.float    "saleamt"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
-  create_table "games", :force => true do |t|
+  create_table "games", force: true do |t|
     t.string   "title"
     t.string   "platform"
     t.date     "release_date"
@@ -46,8 +46,8 @@ ActiveRecord::Schema.define(:version => 20140125034243) do
     t.string   "genres"
     t.string   "metacritic_rating"
     t.string   "image_url"
-    t.datetime "created_at",        :null => false
-    t.datetime "updated_at",        :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
 end
