@@ -10,50 +10,162 @@
 require 'nokogiri'
 require 'open-uri'
 require 'timeout'
-require 'restclient'
+
+
+# Game.delete_all
+
+GAME_REQUEST_BASE_URL = 'http://thegamesdb.net/api/GetGame.php?id=' 
+
+METACRITIC_REQUEST_BASE_URL = 'http://www.metacritic.com/game/'
+
+GAME_BASE_IMAGE_URL = "http://thegamesdb.net/banners/"
 
 
 
-AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=250&rh=n%3A2445220011'
+VIABLE_CONSOLE_LIST = ["PC"]
+
+CONSOLE_TO_METACRITIC_MAP = Hash.new("fuck")
+
+CONSOLE_TO_METACRITIC_MAP["PC"] = "pc"
 
 
-next_url = AMAZON_STORE_BASE_URL
-
-result = RestClient.get(next_url)
 
 
 
+client = Gamesdb::Client.new
+platforms = client.platforms.all
 
-while result != nil
-	result = Nokogiri::HTML(result)
 
-	File.open("db/test_files/product_url"  +".html", 'w') { |file| file.write(result.to_s) }
+	platforms.each do |platform| unless !(VIABLE_CONSOLE_LIST.include?(platform.name))
+		puts(platform.name)
+		puts("in it")
+		platform_games_wrapper = client.get_platform_games(platform.id)
+		platform_games = platform_games_wrapper["Game"]
+		if (!(platform_games.nil?) && platform.id != "4914")
+			platform_games.each do |platform_game|
+				id = platform_game["id"]
+				game = client.get_game(id)["Game"]
+				request_url = "#{GAME_REQUEST_BASE_URL}#{id}"
 
-	AmazonHelper.parseProductsOffResultPage(result)
 
-	next_url_chunk = result.css(".pagnNext").to_s
-	next_url_start = next_url_chunk.index('<a href="')
-	next_url_end = next_url_chunk.index('" class')
-	next_url = next_url_chunk[next_url_start+9...next_url_end]
+				title = game["GameTitle"]
+				release_date = game["ReleaseDate"]
+				description = game["Overview"]
+				esrb_rating = game["ESRB"]
+				players = game["Players"]
+				coop = game["Co-op"]
+				platform = game["Platform"]
+				publisher = game["Publisher"]
+				developer = game["Developer"]
 
-	next_url_chunks = next_url.split("&amp;")
 
-	next_url = "";
 
-	next_url_chunks.each do |url_chunk|
-		next_url = next_url + "&" + url_chunk
+				boxart_url_end = game["Images"]["boxart"]
+				image_url = "#{GAME_BASE_IMAGE_URL}#{boxart_url_end}"
+
+				test = Game.where("title = ? AND platform = ?", title, platform).first
+				if test != nil
+					puts("Game already in")
+					next
+				end
+
+
+
+
+
+
+
+
+
+
+
+				result = Nokogiri::XML(open(request_url))
+
+				genres_noko = result.xpath("//genre")
+				genres = []
+
+				for i in 0..genres_noko.length - 1
+					genres[i] = /.*<genre>(.*)<\/genre>.*/.match(genres_noko[i].to_s)[1]
+				end
+
+				metacritic_title = (title.downcase)
+				metacritic_title.gsub!("---", '-')
+				metacritic_title.gsub!(' - ', '---')
+				metacritic_title.gsub!(': ', '-')
+				metacritic_title.gsub!(' ', '-')
+				metacritic_title.gsub!('_', '-')
+				metacritic_title.gsub!("'", '')
+
+
+
+				console_metacritic = CONSOLE_TO_METACRITIC_MAP[platform]
+				metacritic_url = "#{METACRITIC_REQUEST_BASE_URL}#{console_metacritic}/#{metacritic_title}"
+
+
+				if metacritic_url.include? "viva-pi"
+					puts("fixing this shit")
+					metacritic_url = "http://www.metacritic.com/game/xbox-360/viva-pinata-trouble-in-paradise"
+				end
+
+
+				if metacritic_url.include? "[platinum-hits]"
+					puts("fixing this shit")
+					next
+				end
+
+				if metacritic_url.include? "combo-pack"
+					puts("fixing this shit")
+					next
+				end
+
+
+
+
+
+			
+				puts(metacritic_url)
+
+
+				if (metacritic_url == "http://www.metacritic.com/game/pc/mission-against-terror")
+					next
+				end
+
+				begin
+					result = Nokogiri::HTML(open(metacritic_url))
+					score = result.css("div.metascore_w.xlarge")[0]
+					if score != nil
+						score = score.css('span')
+						score = /.*<span itemprop="ratingValue">(.*)<\/span>.*/.match(score.to_s)
+						if score != nil
+							score = score[1]
+						else
+							score = "0"
+						end
+					
+					else
+						score = "0"
+					end
+				rescue Exception => ex
+					puts("score fubar'd")
+					score = "0"
+				end
+
+
+				puts score
+
+
+				g = Game.create!(title: title, release_date: release_date, 
+					description: description, esrb_rating: esrb_rating, players: players,
+					coop: coop, publisher: publisher, developer: developer, genres: genres, 
+					metacritic_rating: score, image_url: image_url)
+
+				puts(g.title)
+
+
+			end
+		end
 	end
-
-	next_url = next_url[1...next_url.length]
-
-	puts next_url
-	puts "\n"
-	result = RestClient.get(next_url)
 end
-
-
-
-
 
 
 

@@ -15,6 +15,8 @@ gem 'sidekiq'
 gem 'sucker_punch', '~> 1.0.1'
 gem "rest-client", "~> 1.6.7"
 
+gem 'protected_attributes'
+
 group :development, :test do
   gem 'sqlite3', '1.3.8'
   gem 'rspec-rails', '2.11.0'
