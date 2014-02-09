@@ -88,12 +88,13 @@ platforms = client.platforms.all
 					genres[i] = /.*<genre>(.*)<\/genre>.*/.match(genres_noko[i].to_s)[1]
 				end
 
-				metacritic_title = (title.underscore)
+				metacritic_title = (title.downcase)
+				metacritic_title.gsub!("---", '-')
+				metacritic_title.gsub!(' - ', '---')
 				metacritic_title.gsub!(': ', '-')
 				metacritic_title.gsub!(' ', '-')
 				metacritic_title.gsub!('_', '-')
 				metacritic_title.gsub!("'", '')
-				metacritic_title.gsub!("---", '-')
 
 
 
@@ -124,12 +125,17 @@ platforms = client.platforms.all
 			
 				puts(metacritic_url)
 
+
+				if (metacritic_url == "http://www.metacritic.com/game/pc/mission-against-terror")
+					next
+				end
+
 				begin
 					result = Nokogiri::HTML(open(metacritic_url))
-					score = result.css("div.metascore_summary")[0]
+					score = result.css("div.metascore_w.xlarge")[0]
 					if score != nil
-						score = score.css('span.score_value')
-						score = /.*<span class="score_value" property="v:average">(.*)<\/span>.*/.match(score.to_s)
+						score = score.css('span')
+						score = /.*<span itemprop="ratingValue">(.*)<\/span>.*/.match(score.to_s)
 						if score != nil
 							score = score[1]
 						else
@@ -145,6 +151,7 @@ platforms = client.platforms.all
 				end
 
 
+				puts score
 
 
 				g = Game.create!(title: title, release_date: release_date, 
@@ -162,23 +169,3 @@ end
 
 
 
-# class CreateGames < ActiveRecord::Migration
-#   def change
-#     create_table :games do |t|
-#       t.string :title
-#       t.string :platform
-#       t.string :release_date
-#       t.string :description
-#       t.string :esrb_rating
-#       t.string :players
-#       t.string :coop
-#       t.string :publisher
-#       t.string :developer
-#       t.string :genres
-#       t.string :metacritic_rating
-#       t.string :image_url
-
-#       t.timestamps
-#     end
-#   end
-# end
