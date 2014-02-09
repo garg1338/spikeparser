@@ -31,7 +31,7 @@ class SteamHelper
     game_title = /.*<div class="apphub_AppName">(.*)<\/div>.*/.match(game_title)
 
     if game_title == nil || game_title[0] == ""
-      puts "FUCKED WE ARE"
+      # puts "FUCKED WE ARE"
       return
     end
 
@@ -154,17 +154,28 @@ class SteamHelper
 
 
     puts game_title
-    if original_price == ""
-      puts "Free to play!"
+    search_title = StringHelper.create_search_title(game_title)
+    games_in_db = Game.where("search_title =?", search_title)
+
+    if games_in_db.length == 0
+      puts search_title
+      File.open("db/test_files/steam_misses.txt", 'a+') { |file| file << (search_title+"\n") }
+      #todo write to file
     else
-      puts original_price
+      puts games_in_db.first.title
     end
 
-    if sale_price == ""
-      puts "Not on sale!"
-    else
-      puts sale_price
-    end
+    # if original_price == ""
+    #   puts "Free to play!"
+    # else
+    #   puts original_price
+    # end
+
+    # if sale_price == ""
+    #   puts "Not on sale!"
+    # else
+    #   puts sale_price
+    # end
 
 
   end

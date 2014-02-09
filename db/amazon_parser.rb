@@ -14,7 +14,7 @@ require 'restclient'
 
 
 
-AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=250&rh=n%3A2445220011'
+AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=3&rh=n%3A2445220011'
 
 
 next_url = AMAZON_STORE_BASE_URL
