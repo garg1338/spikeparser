@@ -30,6 +30,22 @@ class AmazonHelper
 
 
 
+
+      #seeing if we find a match
+      search_title = StringHelper.create_search_title(title)
+      found = Game.exists?(['search_title LIKE ?', "%#{search_title}%"])
+
+      if found
+        puts "Match Found!: " + search_title
+      else
+        puts "Nothing found: " + search_title
+      end
+
+      puts "\n"
+
+
+
+
       if row.to_s.include? "Sign up to be notified when this item becomes available."
         next
       end

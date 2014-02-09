@@ -10,23 +10,46 @@
 require 'nokogiri'
 require 'open-uri'
 require 'timeout'
+require 'restclient'
 
 
-# Game.delete_all
 
-games_all = Game.all
+AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=3&rh=n%3A2445220011'
 
-games_all.each do |game|
-	str = StringHelper.create_search_title(game.title)
-	game.update_attributes(:search_title => str)
-	game.save!
+
+next_url = AMAZON_STORE_BASE_URL
+
+result = RestClient.get(next_url)
+
+
+
+
+while result != nil
+	result = Nokogiri::HTML(result)
+
+	File.open("db/test_files/product_url"  +".html", 'w') { |file| file.write(result.to_s) }
+
+	AmazonHelper.parseProductsOffResultPage(result)
+
+	next_url_chunk = result.css(".pagnNext").to_s
+	next_url_start = next_url_chunk.index('<a href="')
+	next_url_end = next_url_chunk.index('" class')
+	next_url = next_url_chunk[next_url_start+9...next_url_end]
+
+	next_url_chunks = next_url.split("&amp;")
+
+	next_url = "";
+
+	next_url_chunks.each do |url_chunk|
+		next_url = next_url + "&" + url_chunk
+	end
+
+	next_url = next_url[1...next_url.length]
+
+	puts next_url
+	puts "\n"
+	result = RestClient.get(next_url)
 end
-
-
-
-puts StringHelper.create_search_title("Warhammer® 40,000: Dawn of War® II Chaos Rising")
-puts StringHelper.create_search_title("Warhammer 40,000: Dawn of War II - Chaos Rising")
-
 
 
 
