@@ -21,10 +21,7 @@ module SteamHelper
   end
 
 
-
-
-
-  def self.extractPageInfo(page)
+  def self.getTitle(page)
 
     #game title
     game_title = page.at_xpath('//*[@id="main_content"]/div[1]/div[2]/div/div[3]').to_s
@@ -32,20 +29,36 @@ module SteamHelper
 
     if game_title == nil || game_title[0] == ""
       # puts "FUCKED WE ARE"
-      return
+      return nil
     end
 
     game_title = game_title[1]
+    return game_title
+  end
 
-
-    #game description
+  def self.getDescription(page)
     game_description = page.at_xpath('//*[@id="game_highlights"]/div[2]/div/div[2]').to_s
     game_description = game_description[38...game_description.length - 6]
+    # if game_description.include? "Requires the base game"
+
+    #   puts "dlc descrip!"
+    #   description_area = page.css("div#game_area_description").to_s
+
+    #   description_start = description_area.index("<h2>About the Game</h2>")
 
 
+    #   description_area = description_area[description_start+23...description_area.length]
 
+    #   puts description_area
+
+    # end
+
+    return game_description
+
+  end
+
+  def self.getGenres(page)
     page_string = page.to_s
-
 
     #obtain genres
       #genres = page.at_xpath('//*[@id="game_highlights"]/div[2]/div/div[4]/div[1]').to_s
@@ -69,10 +82,15 @@ module SteamHelper
           genre_array.push(genre)
         end
       end
-    end
+      return genre_array  
+    end  
+
+    return nil
+  end
 
 
-    #developer
+  def self.getDeveloper(page)
+    page_string = page.to_s
     developer = "N/A"
     developer_start = page_string.index("<b>Developer:</b>")
     if !developer_start.nil?
@@ -84,8 +102,11 @@ module SteamHelper
       developer = developer_chunk[start_index+2...end_index]
     end
 
+    return developer
+  end
 
-    #publisher
+  def self.getPublisher(page)
+    page_string = page.to_s
     publisher = "N/A"
     publisher_start = page_string.index("<b>Publisher:</b>")
     if !publisher_start.nil?
@@ -97,8 +118,11 @@ module SteamHelper
       publisher = publisher_chunk[start_index+2...end_index]
     end
 
+    return publisher    
+  end
 
-    #release date
+  def self.getReleaseDate(page)
+    page_string = page.to_s
     release_date = "N/A"
     release_start = page_string.index("<b>Release Date:</b>")
     if !release_start.nil?
@@ -110,28 +134,19 @@ module SteamHelper
 
       release_date = release_date.strip
     end
+    
+    return release_date    
+  end
 
-
-
-    #boxart
-    box_art_chunk = page.css(".game_header_image").to_s
-    box_art_start = box_art_chunk.index('src="')
-    box_art_end = box_art_chunk.index('">')
-    box_art_url = box_art_chunk[box_art_start+5...box_art_end]
-
-
-
-
+  def self.getPricing(page)
     price_chunk = page.css(".game_purchase_action")[0]
 
     if price_chunk == nil
       price_chunk = page.css(".game_purchase_action")
     end
 
-
     original_price = price_chunk.css(".discount_original_price")[0].to_s
     sale_price = price_chunk.css(".discount_final_price")[0].to_s
-
     #this means the game isn't on sale
     if original_price == "" 
       original_price = price_chunk.css(".game_purchase_price.price")[0].to_s
@@ -142,15 +157,12 @@ module SteamHelper
       end
 
     end
-
-
     #game is just on sale for regular price
     if original_price != "" && sale_price == ""
       original_price_start = original_price.index('">')
       original_price_end = original_price.index('</div>')
       original_price = original_price[original_price_start+2...original_price_end]
     end
-
 
     #game is on sale
     if original_price != "" && sale_price != ""
@@ -167,23 +179,111 @@ module SteamHelper
     sale_price = sale_price.strip
 
 
-    puts game_title
-    search_title = StringHelper.create_search_title(game_title)
-    games_in_db = Game.where("search_title =?", search_title)
+    if sale_price == ""
+      sale_price = original_price
+    end
 
-    if games_in_db.length == 0
+
+
+    arr = [original_price, sale_price]
+
+    return arr
+
+  end
+
+
+  def self.getBoxArt(page)
+    box_art_chunk = page.css(".game_header_image").to_s
+    box_art_start = box_art_chunk.index('src="')
+    box_art_end = box_art_chunk.index('">')
+    box_art_url = box_art_chunk[box_art_start+5...box_art_end]
+    return box_art_url
+  end
+
+
+
+
+  def self.extractPageInfo(page)
+
+    #game title
+    game_title = SteamHelper.getTitle(page)
+
+    if(game_title == nil)
+      return
+    end
+
+    #game description
+    game_description = SteamHelper.getDescription(page)
+
+    #obtain genres
+    genres = SteamHelper.getGenres(page)
+
+
+    #developer
+    developer = SteamHelper.getDeveloper(page)
+
+
+    #publisher
+    publisher = SteamHelper.getPublisher(page)
+
+    #release date
+    release_date = SteamHelper.getReleaseDate(page)
+
+
+    #boxart
+    box_art_url = SteamHelper.getBoxArt(page)
+
+    #pricing
+    price_arr = SteamHelper.getPricing(page)
+    original_price = price_arr[0]
+    sale_price = price_arr[1]
+
+
+    if original_price == ""
+      return
+    end
+
+    game = GameSearchHelper.find_right_game(game_title, game_description)
+    search_title = StringHelper.create_search_title(game_title)
+
+
+    if game == nil
       puts "Making new Game!"
       File.open("db/test_files/steam_misses.txt", 'a+') { |file| file << (search_title+"\n") }
-      g = Game.create!(title: game_title, release_date: release_date, 
-          description: game_description,  publisher: publisher, developer: developer, genres: genre_array, 
+      game = Game.create!(title: game_title, release_date: release_date, 
+          description: game_description,  publisher: publisher, developer: developer, genres: genres, 
            image_url: box_art_url, search_title: search_title)
-      puts(g.title)
-      puts(g.search_title)
 
+    elsif !(GameSearchHelper.are_titles_same(game.search_title, search_title))
+      puts "Making new game based on another game's info"
+
+      puts game.search_title
+      puts search_title
+
+      File.open("db/test_files/steam_misses.txt", 'a+') { |file| file << (search_title+"\n") }
+
+      if game.genres != nil
+        genres = game.genres
+      end
+
+      game_new = Game.create!(title: game_title, release_date: release_date,
+        description: game_description, publisher: publisher, developer: developer, genres: genres,
+        image_url: box_art_url, search_title: search_title, metacritic_rating: game.metacritic_rating,
+        coop: game.coop, esrb_rating: game.esrb_rating, players: game.players)
+
+      game = game_new
     else
-      puts games_in_db.first.title
-      #todo update information if neccesary
+        #update fields?
+      puts "no need to do anything but make the sale data"
+
     end
+
+    #make the sale
+    #make the sale history
+
+
+    puts(game.title)
+    puts(game.search_title)
 
     # if original_price == ""
     #   puts "Free to play!"

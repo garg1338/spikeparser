@@ -30,7 +30,7 @@ until i == 300
 
 		row_info_2 = row_info[2].to_s
 
-		if row_info[1].to_s.include? "Game"
+		if row_info[1].to_s.include? "Game" or row_info[1].to_s.include? "DLC"
 			row_info_app_string = row_info[0].to_s
 			start_index = row_info_app_string.index('">')
 			end_index = row_info_app_string.index('</a>')
