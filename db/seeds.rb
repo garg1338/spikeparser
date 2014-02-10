@@ -15,42 +15,46 @@ require 'restclient'
 
 
 
-i = 1
+# StringHelper.prep_all_search_titles
 
-until i == 300
-	APP_BASE_URL = 'http://steamdb.info/apps/page' + i.to_s + '/'
+AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=3&rh=n%3A2445220011'
 
-	STEAM_STORE_BASE_URL = 'http://store.steampowered.com/app/'
 
-	result = Nokogiri::HTML(open(APP_BASE_URL))
+next_url = AMAZON_STORE_BASE_URL
 
-	rows = result.css("table#table-apps")
+result = RestClient.get(next_url)
 
-	rows = rows.css("tbody")
-	rows = rows.css("tr")
 
-	rows.each do |row|
-		row_info = row.css("td")
 
-		row_info_2 = row_info[2].to_s
 
-		if row_info[1].to_s.include? "DLC"
-			row_info_app_string = row_info[0].to_s
-			start_index = row_info_app_string.index('">')
-			end_index = row_info_app_string.index('</a>')
-			store_id = row_info_app_string[start_index+2...end_index]
+while result != nil
+	result = Nokogiri::HTML(result)
 
-			url = STEAM_STORE_BASE_URL + store_id
-			page = SteamHelper.agePasser(url)
-			puts url
-			SteamHelper.extractPageInfo(page)
+	File.open("db/test_files/product_url"  +".html", 'w') { |file| file.write(result.to_s) }
 
-		end
+	AmazonHelper.parseProductsOffResultPage(result)
+
+	next_url_chunk = result.css(".pagnNext").to_s
+	next_url_start = next_url_chunk.index('<a href="')
+	next_url_end = next_url_chunk.index('" class')
+	next_url = next_url_chunk[next_url_start+9...next_url_end]
+
+	next_url_chunks = next_url.split("&amp;")
+
+	next_url = "";
+
+	next_url_chunks.each do |url_chunk|
+		next_url = next_url + "&" + url_chunk
 	end
-	i = i + 1;
+
+	next_url = next_url[1...next_url.length]
+
+	puts next_url
+	puts "\n"
+	result = RestClient.get(next_url)
 end
 
 
 
 
-
+# the elder scrolls v skyrim dlc hearthfire

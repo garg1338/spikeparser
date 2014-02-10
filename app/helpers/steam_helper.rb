@@ -4,7 +4,7 @@ require 'timeout'
 require 'restclient'
 
 
-class SteamHelper
+module SteamHelper
     
 
 

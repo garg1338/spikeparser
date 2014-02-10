@@ -4,7 +4,7 @@ require 'timeout'
 require 'restclient'
 
 
-class AmazonHelper
+module AmazonHelper
   def self.parseProductsOffResultPage(result)
     rows = result.css(".result.product")
     rows.each do |row|
@@ -33,15 +33,18 @@ class AmazonHelper
 
       #seeing if we find a match
       search_title = StringHelper.create_search_title(title)
-      found = Game.exists?(['search_title LIKE ?', "%#{search_title}%"])
 
-      if found
-        puts "Match Found!: " + search_title
-      else
-        puts "Nothing found: " + search_title
-      end
 
-      puts "\n"
+      GameSearchHelper.find_right_game(search_title)
+      # found = Game.exists?(['search_title LIKE ?', "%#{search_title}%"])
+
+      # if found
+      #   puts "Match Found!: " + search_title
+      # else
+      #   puts "Nothing found: " + search_title
+      # end
+
+      # puts "\n"
 
 
 
