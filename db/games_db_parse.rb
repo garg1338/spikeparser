@@ -153,11 +153,13 @@ platforms = client.platforms.all
 
 				puts score
 
+				search_title = StringHelper.create_search_title(title)
+
 
 				g = Game.create!(title: title, release_date: release_date, 
 					description: description, esrb_rating: esrb_rating, players: players,
 					coop: coop, publisher: publisher, developer: developer, genres: genres, 
-					metacritic_rating: score, image_url: image_url)
+					metacritic_rating: score, image_url: image_url, search_title: search_title)
 
 				puts(g.title)
 
