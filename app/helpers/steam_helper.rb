@@ -51,6 +51,7 @@ class SteamHelper
       #genres = page.at_xpath('//*[@id="game_highlights"]/div[2]/div/div[4]/div[1]').to_s
 
     genre_start = page_string.index("Genre: ")
+    genre_array = []
     if genre_start != nil
       genre_chunk = page_string[genre_start...page_string.length]
       genre_end = genre_chunk.index("<br>")
@@ -62,7 +63,11 @@ class SteamHelper
       genres.each do |genre|
         start_index = genre.index('">')
         end_index = genre.index("</a>")
-        genre = genre[start_index+2...end_index] #obtain each genre
+
+        if start_index != nil
+          genre = genre[start_index+2...end_index] #obtain each genre
+          genre_array.push(genre)
+        end
       end
     end
 
@@ -105,6 +110,15 @@ class SteamHelper
 
       release_date = release_date.strip
     end
+
+
+
+    #boxart
+    box_art_chunk = page.css(".game_header_image").to_s
+    box_art_start = box_art_chunk.index('src="')
+    box_art_end = box_art_chunk.index('">')
+    box_art_url = box_art_chunk[box_art_start+5...box_art_end]
+
 
 
 
@@ -158,11 +172,17 @@ class SteamHelper
     games_in_db = Game.where("search_title =?", search_title)
 
     if games_in_db.length == 0
-      puts search_title
+      puts "Making new Game!"
       File.open("db/test_files/steam_misses.txt", 'a+') { |file| file << (search_title+"\n") }
-      #todo write to file
+      g = Game.create!(title: game_title, release_date: release_date, 
+          description: game_description,  publisher: publisher, developer: developer, genres: genre_array, 
+           image_url: box_art_url, search_title: search_title)
+      puts(g.title)
+      puts(g.search_title)
+
     else
       puts games_in_db.first.title
+      #todo update information if neccesary
     end
 
     # if original_price == ""
