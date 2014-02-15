@@ -47,6 +47,34 @@ module GameSearchHelper
     end
 
 
+    #here we'll try words that may be messed up
+
+      #super heroes as superheroes
+    search_title = search_title_original
+    if search_title.include? "super heroes"
+      search_title.gsub('super heroes', 'superheroes')
+      games_in_db = Game.where("search_title =?", search_title)
+
+      if games_in_db.length != 0
+        puts "Match found on mismatch!: " + search_title
+        return games_in_db.first
+      end
+    end
+
+      #superheroes as super heroes
+    search_title = search_title_original
+    if search_title.include? "superheroes"
+      search_title.gsub('superheroes', 'super heroes')
+      games_in_db = Game.where("search_title =?", search_title)
+
+      if games_in_db.length != 0
+        puts "Match found on mismatch!: " + search_title
+        return games_in_db.first
+      end
+    end
+
+
+
     #now we try chopping off the word edition, etc.
 
     search_title = search_title_original

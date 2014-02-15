@@ -6,12 +6,10 @@
 #   cities = City.create([{ :name => 'Chicago' }, { :name => 'Copenhagen' }])
 #   Mayor.create(:name => 'Emanuel', :city => cities.first)
 
-
 require 'nokogiri'
 require 'open-uri'
 require 'timeout'
 require 'restclient'
-
 
 
 AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=3&rh=n%3A2445220011'
@@ -29,7 +27,7 @@ while result != nil
 
 	File.open("db/test_files/product_url"  +".html", 'w') { |file| file.write(result.to_s) }
 
-	AmazonHelper.parseProductsOffResultPage(result)
+	AmazonHelper.parse_products_off_result_page(result)
 
 	next_url_chunk = result.css(".pagnNext").to_s
 	next_url_start = next_url_chunk.index('<a href="')
@@ -52,8 +50,4 @@ while result != nil
 end
 
 
-
-
-
-
-
+# the elder scrolls v skyrim dlc hearthfire

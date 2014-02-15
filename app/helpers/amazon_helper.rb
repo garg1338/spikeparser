@@ -5,7 +5,7 @@ require 'restclient'
 
 
 module AmazonHelper
-  def self.parseProductsOffResultPage(result)
+  def self.parse_products_off_result_page(result)
     rows = result.css(".result.product")
     rows.each do |row|
 
@@ -29,13 +29,11 @@ module AmazonHelper
       title = title[title_start+16...title_end]
 
 
-
-
       #seeing if we find a match
       search_title = StringHelper.create_search_title(title)
 
 
-      GameSearchHelper.find_right_game(search_title)
+      game = GameSearchHelper.find_right_game(search_title, "no similar description")
       # found = Game.exists?(['search_title LIKE ?', "%#{search_title}%"])
 
       # if found
@@ -45,6 +43,11 @@ module AmazonHelper
       # end
 
       # puts "\n"
+
+      if game == nil
+        puts "NO GAME FOUND"
+        next
+      end
 
 
 
@@ -78,10 +81,25 @@ module AmazonHelper
       puts title
       puts original_price
       puts sale_price
+      puts "game found!"
+      original_price = '%.2f' %  original_price.delete( "$" ).to_f
+      sale_price = '%.2f' %  sale_price.delete( "$" ).to_f
+
+
+      product_url = row.css(".productTitle").css("a")[0].to_s
+
+      link_start = product_url.index('<a href="')
+      link_end = product_url.index('">')
+
+      product_url = product_url[link_start+9...link_end]
+
+      game_sale = game.game_sales.create!(store: "Amazon", url: product_url, origamt: original_price, saleamt: sale_price, occurrence: DateTime.now)
+      game_sale_history = game.game_sale_histories.create!(store: "Amazon", price: sale_price, occurred: DateTime.now)
+
     end
   end
 
-  def self.extractPageInfo(product_url)
+  def self.extract_page_info(product_url)
 
     result = RestClient.get(product_url)
     result = Nokogiri::HTML(result)
@@ -91,7 +109,7 @@ module AmazonHelper
     # File.open("db/test_files/" + product_url +".html", 'w') { |file| file.write(result.to_s) }
 
 
-    parseProductsOffResultPage(result)
+    parse_products_off_result_page(result)
 
 
 
