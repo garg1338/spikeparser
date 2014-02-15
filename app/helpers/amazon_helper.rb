@@ -14,6 +14,13 @@ module AmazonHelper
       title = title.to_s
 
 
+      title_encode = title.encode("UTF-8", invalid: :replace, undef: :replace)
+
+
+      if !(title_encode.valid_encoding?)
+        next
+      end
+
 
       if (!title.include? "[")
         next
@@ -32,17 +39,7 @@ module AmazonHelper
       #seeing if we find a match
       search_title = StringHelper.create_search_title(title)
 
-
       game = GameSearchHelper.find_right_game(search_title, "no similar description")
-      # found = Game.exists?(['search_title LIKE ?', "%#{search_title}%"])
-
-      # if found
-      #   puts "Match Found!: " + search_title
-      # else
-      #   puts "Nothing found: " + search_title
-      # end
-
-      # puts "\n"
 
       if game == nil
         puts "NO GAME FOUND"

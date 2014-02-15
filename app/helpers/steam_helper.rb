@@ -248,6 +248,9 @@ module SteamHelper
     game = GameSearchHelper.find_right_game(game_title, game_description)
     search_title = StringHelper.create_search_title(game_title)
 
+    puts game_title
+    puts search_title
+
 
     if game == nil
       puts "Making new Game!"
