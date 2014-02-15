@@ -12,9 +12,7 @@ require 'timeout'
 require 'restclient'
 
 
-
 GmgHelper.parseGmgSite
-
 
 
 

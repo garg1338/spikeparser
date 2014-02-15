@@ -171,7 +171,7 @@ module GmgHelper
     if price_arr == nil
       return 
     end
-    
+
     normal_price = price_arr.first
     current_price = price_arr.last
 
@@ -199,6 +199,8 @@ module GmgHelper
     # puts developer
     # puts release_date
     # puts box_art_url
+
+
 
     puts "\n"
 
@@ -242,6 +244,18 @@ module GmgHelper
     puts(game.title)
     puts(game.search_title)
 
+    original_price = '%.2f' %  normal_price.delete( "$" ).to_f
+    sale_price = '%.2f' %  current_price.delete( "$" ).to_f
+
+    puts original_price
+    puts sale_price
+
+
+
+    game_sale = game.game_sales.create!(store: "GMG", url: sale_link, origamt: original_price, saleamt: sale_price, occurrence: DateTime.now)
+
+    game_sale_history = game.game_sale_histories.create!(store: "GMG", price: sale_price, occurred: DateTime.now)
+
 
 
   end
@@ -273,7 +287,7 @@ module GmgHelper
 
 
   def self.parseGmgSite
-    # GmgHelper.goThroughEntireGenre("action", 78)
+    GmgHelper.goThroughEntireGenre("action", 78)
 
     GmgHelper.goThroughEntireGenre("shooter", 16)
 

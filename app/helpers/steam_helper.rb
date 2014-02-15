@@ -203,7 +203,9 @@ module SteamHelper
 
 
 
-  def self.extractPageInfo(page)
+  def self.extractPageInfo(page_link)
+    page = SteamHelper.agePasser(page_link)
+    puts page_link
 
     #game title
     game_title = SteamHelper.getTitle(page)
@@ -284,6 +286,17 @@ module SteamHelper
 
     puts(game.title)
     puts(game.search_title)
+
+    original_price = '%.2f' %  original_price.delete( "$" ).to_f
+    sale_price = '%.2f' %  sale_price.delete( "$" ).to_f
+
+    puts original_price
+    puts sale_price
+
+    game_sale = game.game_sales.create!(store: "Steam", url: page_link, origamt: original_price, saleamt: sale_price, occurrence: DateTime.now)
+    game_sale_history = game.game_sale_histories.create!(store: "Steam", price: sale_price, occurred: DateTime.now)
+
+
 
     # if original_price == ""
     #   puts "Free to play!"

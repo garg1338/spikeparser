@@ -11,6 +11,7 @@ require 'open-uri'
 require 'timeout'
 require 'restclient'
 
+
 i = 1
 
 until i == 300
@@ -37,9 +38,7 @@ until i == 300
 			store_id = row_info_app_string[start_index+2...end_index]
 
 			url = STEAM_STORE_BASE_URL + store_id
-			page = SteamHelper.agePasser(url)
-			puts url
-			SteamHelper.extractPageInfo(page)
+			SteamHelper.extractPageInfo(url)
 
 		end
 	end
@@ -48,8 +47,4 @@ end
 
 
 
-
-
-
-
-
+# the elder scrolls v skyrim dlc hearthfire

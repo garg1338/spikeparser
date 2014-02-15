@@ -12,6 +12,9 @@ module StringHelper
       str = title.gsub(/([#{escape_for_space_characters}])/, ' ')
       str = str.gsub(/([#{escape_for_nothing_characters}])/, '')
       str = str.gsub('dlc', '')
+
+      str = str.gsub('amp;', 'and')
+      str = str.gsub('&', 'and')
   end
 
   def self.create_search_title(title)
