@@ -5,6 +5,84 @@ require 'restclient'
 
 
 module AmazonHelper
+
+
+  #we need a separate function to get the first page of amazon because it is different from the other pages
+  def self.parse_first_sale_page
+    amzn_first_page_url = "http://www.amazon.com/s?ie=UTF8&page=1&rh=n%3A2445220011"
+
+
+    result = RestClient.get(amzn_first_page_url)
+    result = Nokogiri::HTML(result)
+
+
+    rows = result.css(".result.product")
+
+
+    rows.each do |row|
+
+
+      title_chunk = row.css("a.title").to_s
+      title_start = title_chunk.index('">')
+      title_end = title_chunk.index("[")
+
+      title = title_chunk[title_start+2...title_end]
+
+      search_title = StringHelper.create_search_title(title)
+
+      game = GameSearchHelper.find_right_game(search_title, "no similar description")
+
+      if game == nil
+        puts "NO GAME FOUND"
+        next
+      end
+
+
+      amzn_price_chunk = row.css(".toeOurPrice").to_s
+      price_chunk_start = amzn_price_chunk.index('">$')
+      price_chunk_end = amzn_price_chunk.index('</a>')
+
+      sale_price = amzn_price_chunk[price_chunk_start+2...price_chunk_end]
+      puts sale_price
+
+      original_price = sale_price
+
+      original_price_chunk = row.css("strike").to_s
+
+      if original_price_chunk != ""
+        original_price_start = original_price_chunk.index('<strike>')
+        original_price_end = original_price_chunk.index('</strike>')
+        original_price = original_price_chunk[original_price_start+8...original_price_end]
+      end
+
+      puts original_price
+
+      product_url = row.css(".title").css("a")[0].to_s
+
+      link_start = product_url.index('<a class="title" href="')
+      link_end = product_url.index('">')
+
+      product_url = product_url[link_start+23...link_end]
+
+      puts product_url
+
+
+
+      original_price = '%.2f' %  original_price.delete( "$" ).to_f
+      sale_price = '%.2f' %  sale_price.delete( "$" ).to_f
+      game_sale = game.game_sales.create!(store: "Amazon", url: product_url, origamt: original_price, saleamt: sale_price, occurrence: DateTime.now)
+      game_sale_history = game.game_sale_histories.create!(store: "Amazon", price: sale_price, occurred: DateTime.now)
+
+
+
+
+    end
+
+
+  end
+
+
+
   def self.parse_products_off_result_page(result)
     rows = result.css(".result.product")
     rows.each do |row|
