@@ -256,7 +256,7 @@ module SteamHelper
           description: game_description,  publisher: publisher, developer: developer, genres: genres, 
            image_url: box_art_url, search_title: search_title)
 
-    elsif !(GameSearchHelper.are_titles_same(game.search_title, search_title))
+    elsif !(GameSearchHelper.are_games_same(game.search_title, search_title, game.description, game_description))
       puts "Making new game based on another game's info"
 
       puts game.search_title

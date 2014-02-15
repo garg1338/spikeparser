@@ -215,7 +215,7 @@ module GmgHelper
           description: description,  publisher: publisher, developer: developer, genres: genres, 
            image_url: box_art_url, search_title: search_title)
 
-    elsif !(GameSearchHelper.are_titles_same(game.search_title, search_title))
+    elsif !(GameSearchHelper.are_games_same(game.search_title, search_title, game.description, description))
       puts game.search_title
       puts search_title
       puts "Making new game based on another game's info"

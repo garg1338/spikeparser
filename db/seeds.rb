@@ -12,42 +12,37 @@ require 'timeout'
 require 'restclient'
 
 
-AMAZON_STORE_BASE_URL = 'http://www.amazon.com/s?ie=UTF8&page=3&rh=n%3A2445220011'
 
 
-next_url = AMAZON_STORE_BASE_URL
+i = 1
 
-result = RestClient.get(next_url)
+until i == 300
+	APP_BASE_URL = 'http://steamdb.info/apps/page' + i.to_s + '/'
 
+	STEAM_STORE_BASE_URL = 'http://store.steampowered.com/app/'
 
+	result = Nokogiri::HTML(open(APP_BASE_URL))
 
+	rows = result.css("table#table-apps")
 
-while result != nil
-	result = Nokogiri::HTML(result)
+	rows = rows.css("tbody")
+	rows = rows.css("tr")
 
-	File.open("db/test_files/product_url"  +".html", 'w') { |file| file.write(result.to_s) }
+	rows.each do |row|
+		row_info = row.css("td")
 
-	AmazonHelper.parse_products_off_result_page(result)
+		row_info_2 = row_info[2].to_s
 
-	next_url_chunk = result.css(".pagnNext").to_s
-	next_url_start = next_url_chunk.index('<a href="')
-	next_url_end = next_url_chunk.index('" class')
-	next_url = next_url_chunk[next_url_start+9...next_url_end]
+		if row_info[1].to_s.include? "Game" or row_info[1].to_s.include? "DLC"
+			row_info_app_string = row_info[0].to_s
+			start_index = row_info_app_string.index('">')
+			end_index = row_info_app_string.index('</a>')
+			store_id = row_info_app_string[start_index+2...end_index]
 
-	next_url_chunks = next_url.split("&amp;")
+			url = STEAM_STORE_BASE_URL + store_id
+			SteamHelper.extractPageInfo(url)
 
-	next_url = "";
-
-	next_url_chunks.each do |url_chunk|
-		next_url = next_url + "&" + url_chunk
+		end
 	end
-
-	next_url = next_url[1...next_url.length]
-
-	puts next_url
-	puts "\n"
-	result = RestClient.get(next_url)
+	i = i + 1;
 end
-
-
-# the elder scrolls v skyrim dlc hearthfire
